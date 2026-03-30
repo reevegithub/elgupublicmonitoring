@@ -2048,6 +2048,23 @@
                 doc.save(fileName + ".pdf");
             }
         }
+function saveSettings() {
+    const url = document.getElementById('apiUrl').value.trim();
+
+    if (!url) {
+        alert('Please enter your Apps Script URL.');
+        return;
+    }
+
+    localStorage.setItem('elgu_api_url', url);
+    API_URL = url;
+
+    alert('Apps Script URL saved successfully.');
+    toggleSettings();
+
+    initData();
+    checkVersion();
+}
     </script>
 </body>
 
