@@ -922,7 +922,7 @@
         const DOWNLOAD_URL = "https://drive.google.com/drive/folders/1qA2OZqQSDru05aIzgFPhCGicESXp22u1";
         const CURRENT_VERSION = "1.10";
 
-        let LIVE_DB = [], CURRENT_VIEW_DB = [], API_URL = localStorage.getItem('elgu_api_url') || '';
+
         let activeFilter = 'All', map = null, markers = [];
         let chartInstPie = null, chartInstBar = null, chartInstYear = null, chartModalInst = null;
         let compareState = null, snapshotMode = false;
@@ -1015,15 +1015,26 @@
             ]
         };
 
-        window.onload = () => {
-            if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark');
-            if (API_URL) {
-                document.getElementById('apiUrl').value = API_URL;
-                initData();
-                checkVersion();
-                setInterval(() => { if (!snapshotMode && (!compareState || document.getElementById('compareBanner').classList.contains('hidden'))) fetchLiveData(); }, 30000);
-            } else toggleSettings();
-        };
+ window.onload = () => {
+    if (localStorage.getItem('theme') === 'dark') {
+        document.documentElement.classList.add('dark');
+    }
+
+    const savedEncodedUrl = localStorage.getItem('elgu_api_url_b64') || '';
+
+    if (API_URL) {
+        document.getElementById('apiUrl').value = savedEncodedUrl;
+        initData();
+        checkVersion();
+        setInterval(() => {
+            if (!snapshotMode && (!compareState || document.getElementById('compareBanner').classList.contains('hidden'))) {
+                fetchLiveData();
+            }
+        }, 30000);
+    } else {
+        toggleSettings();
+    }
+};
 
         function showLoading(txt = 'SYNCING DATA...') { document.getElementById('loaderText').innerText = txt; document.getElementById('loadingOverlay').classList.remove('hidden'); }
         function hideLoading() { document.getElementById('loadingOverlay').classList.add('hidden'); }
@@ -2049,22 +2060,91 @@
             }
         }
 function saveSettings() {
-    const url = document.getElementById('apiUrl').value.trim();
+    const input = document.getElementById('apiUrl').value.trim();
 
-    if (!url) {
-        alert('Please enter your Apps Script URL.');
+    if (!input) {
+        alert('Please enter your Apps Script URL or Base64 value.');
         return;
     }
 
-    localStorage.setItem('elgu_api_url', url);
-    API_URL = url;
+    let finalUrl = '';
+
+    if (input.startsWith('http')) {
+        finalUrl = input;
+    } else {
+        finalUrl = decodeApiUrl(input);
+    }
+
+    if (!finalUrl || !finalUrl.startsWith('http')) {
+        alert('Invalid Apps Script URL or Base64 value.');
+        return;
+    }
+
+    const encoded = encodeApiUrl(finalUrl);
+
+    localStorage.setItem('elgu_api_url_b64', encoded);
+    API_URL = finalUrl;
 
     alert('Apps Script URL saved successfully.');
     toggleSettings();
-
     initData();
     checkVersion();
 }
+
+function encodeApiUrl(url) {
+    return btoa(url);
+}
+
+function decodeApiUrl(encoded) {
+    try {
+        return atob(encoded);
+    } catch (e) {
+        return '';
+    }
+}
+
+let LIVE_DB = [], CURRENT_VIEW_DB = [];
+let API_URL = '';
+
+(function () {
+    const encoded = localStorage.getItem('elgu_api_url_b64') || '';
+    if (encoded) {
+        API_URL = decodeApiUrl(encoded);
+    }
+})();
+
+function saveSettings() {
+    const input = document.getElementById('apiUrl').value.trim();
+
+    if (!input) {
+        alert('Please enter your Apps Script URL or Base64 value.');
+        return;
+    }
+
+    let finalUrl = '';
+
+    if (input.startsWith('http')) {
+        finalUrl = input;
+    } else {
+        finalUrl = decodeApiUrl(input);
+    }
+
+    if (!finalUrl || !finalUrl.startsWith('http')) {
+        alert('Invalid Apps Script URL or Base64 value.');
+        return;
+    }
+
+    const encoded = encodeApiUrl(finalUrl);
+
+    localStorage.setItem('elgu_api_url_b64', encoded);
+    API_URL = finalUrl;
+
+    alert('Apps Script URL saved successfully.');
+    toggleSettings();
+    initData();
+    checkVersion();
+}
+
     </script>
 </body>
 
